@@ -15,10 +15,15 @@ const sensorDataSchema = new mongoose.Schema({
     phosphate: { type: Number, required: true },
   },
   bloomRisk: { type: String, default: "Low" },
-  timestamp: { type: Date, default: Date.now, index: true }});
+
+  // 🧠 New field for AI-generated insights
+  analysis: { type: String, default: "No analysis available" },
+
+  timestamp: { type: Date, default: Date.now, index: true },
+});
 
 // Geo index for spatial queries
-sensorDataSchema.index({ "location": "2dsphere" });
+sensorDataSchema.index({ location: "2dsphere" });
 
 // Compound index for fast "latest by device" queries
 sensorDataSchema.index({ deviceId: 1, timestamp: -1 });
