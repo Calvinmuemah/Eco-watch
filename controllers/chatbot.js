@@ -1,11 +1,11 @@
-// controllers/chatbot.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { firebaseDB } from "../config/firebase.js";
+import ChatSession from "../models/chatSession.model.js"; // MongoDB model
 import dotenv from "dotenv";
 dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// --- Chat with Bot ---
 export const chatWithBot = async (req, res) => {
   try {
     const { message, sessionId } = req.body;
@@ -16,24 +16,32 @@ export const chatWithBot = async (req, res) => {
     if (!sessionId)
       return res.status(400).json({ error: "sessionId is required." });
 
-    const sessionRef = firebaseDB.ref(`chat_sessions/${sessionId}`);
+    // 1️⃣ Get chat history from MongoDB
+    let chatSession = await ChatSession.findOne({ sessionId });
 
-    // 1 Fetch previous chat history from Firebase
-    const snapshot = await sessionRef.once("value");
-    const chatHistory = snapshot.val() || [];
+    if (!chatSession) {
+      chatSession = await ChatSession.create({
+        sessionId,
+        messages: [],
+      });
+    }
 
-    // 2 Add user message
-    chatHistory.push({ role: "user", content: message, timestamp: Date.now() });
+    // 2️⃣ Add user message
+    chatSession.messages.push({
+      role: "user",
+      content: message,
+      timestamp: new Date(),
+    });
 
-    // Keep only the last 12 messages
-    const trimmedHistory = chatHistory.slice(-12);
+    // Keep last 12 messages for context
+    const trimmedHistory = chatSession.messages.slice(-12);
 
-    // 3 Build conversation context
+    // 3️⃣ Build conversation context
     const conversationContext = trimmedHistory
       .map((m) => `${m.role === "user" ? "User" : "EcoBot"}: ${m.content}`)
       .join("\n");
 
-    // 4 Create AI prompt
+    // 4️⃣ Create AI prompt
     const prompt = `
       You are **EcoBot**, a funny but wise AI environmental assistant 🌿💧.
       You help users understand:
@@ -52,20 +60,19 @@ export const chatWithBot = async (req, res) => {
       Reply to the latest user message only.
     `;
 
-    // 5 Generate response from Gemini
+    // 5️⃣ Generate response using Gemini API
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     const reply = result.response.text();
 
-    // 6 Add bot reply to chat history
-    trimmedHistory.push({
+    // 6️⃣ Add bot reply to MongoDB
+    chatSession.messages.push({
       role: "bot",
       content: reply,
-      timestamp: Date.now(),
+      timestamp: new Date(),
     });
 
-    // 7 Save updated chat to Firebase
-    await sessionRef.set(trimmedHistory);
+    await chatSession.save();
 
     res.status(200).json({ success: true, reply });
   } catch (err) {
@@ -74,7 +81,7 @@ export const chatWithBot = async (req, res) => {
   }
 };
 
-// --- New function to fetch chat history ---
+// --- Get chat history ---
 export const getChatHistory = async (req, res) => {
   try {
     const { sessionId } = req.params;
@@ -82,21 +89,20 @@ export const getChatHistory = async (req, res) => {
     if (!sessionId)
       return res.status(400).json({ error: "sessionId is required." });
 
-    const sessionRef = firebaseDB.ref(`chat_sessions/${sessionId}`);
-    const snapshot = await sessionRef.once("value");
-    const history = snapshot.val();
+    const chatSession = await ChatSession.findOne({ sessionId });
 
-    if (!history)
-      return res.status(404).json({ message: "No chat history found for this user." });
+    if (!chatSession)
+      return res
+        .status(404)
+        .json({ message: "No chat history found for this session." });
 
     res.status(200).json({
       success: true,
-      count: history.length,
-      history,
+      count: chatSession.messages.length,
+      history: chatSession.messages,
     });
   } catch (err) {
     console.error("Error fetching chat history:", err);
     res.status(500).json({ error: "Failed to fetch chat history" });
   }
 };
-
