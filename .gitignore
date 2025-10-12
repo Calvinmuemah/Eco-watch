@@ -1,0 +1,6 @@
+.env
+/node_modules
+/dist
+*.env.local
+backend/serviceAccountKey.json
+/serviceAccountKey.json
