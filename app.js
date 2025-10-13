@@ -14,6 +14,7 @@ import sensorDataRoutes from "./routes/sensorData.routes.js";
 import metricsRoutes from "./routes/metrics.js";
 import chatRoutes from "./routes/chat.js";
 import authRoutes from "./routes/auth.routes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 dotenv.config();
 
@@ -46,6 +47,8 @@ app.use("/api/sensor-data", sensorDataRoutes);
 app.use("/api/metrics", metricsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/reports", reportRoutes);
+
 
 // --- 404 handler ---
 app.use((req, res) => {
