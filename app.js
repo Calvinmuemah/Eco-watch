@@ -15,6 +15,9 @@ import metricsRoutes from "./routes/metrics.js";
 import chatRoutes from "./routes/chat.js";
 import authRoutes from "./routes/auth.routes.js";
 import reportRoutes from "./routes/reportRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
+import NotificationRoutes from './routes/notificationRoutes.js';
+
 
 dotenv.config();
 
@@ -25,6 +28,7 @@ app.use(helmet());
 app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -48,6 +52,8 @@ app.use("/api/metrics", metricsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/contact", contactRoutes);
+app.use('/api/notifications', NotificationRoutes);  
 
 
 // --- 404 handler ---
