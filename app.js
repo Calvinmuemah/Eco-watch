@@ -22,7 +22,7 @@ const app = express();
 
 // --- Determine allowed frontend origin ---
 const allowedOrigin =
-  process.env.CLIENT_URL || "http://localhost:8081"; // 👈 match your frontend dev server
+  process.env.CLIENT_URL || "http://localhost:8081" || "https://eco-frontend-omega.vercel.app";
 
 // --- Middleware setup ---
 app.use(helmet());
