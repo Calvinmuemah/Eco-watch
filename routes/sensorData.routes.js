@@ -3,8 +3,8 @@ import { addSensorData, getAllData, getLatestData } from "../controllers/sensorD
 
 const router = express.Router();
 
-router.post("/", addSensorData);       // IoT device POSTs data here
-router.get("/", getAllData);           // Get all sensor data
-router.get("/latest", getLatestData);  // Get most recent record
+router.post("/", addSensorData);
+router.get("/", getAllData);
+router.get("/latest", getLatestData);
 
 export default router;
