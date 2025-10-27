@@ -23,9 +23,23 @@ dotenv.config();
 
 const app = express();
 
+// --- Determine allowed frontend origin ---
+const allowedOrigin =
+  process.env.CLIENT_URL || "http://localhost:8081" || "https://eco-frontend-omega.vercel.app";
+
 // --- Middleware setup ---
 app.use(helmet());
-app.use(cors({ origin: "*", credentials: true }));
+
+// ✅ Proper CORS setup for credentials
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -54,7 +68,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/contact", contactRoutes);
 app.use('/api/notifications', NotificationRoutes);  
-
 
 // --- 404 handler ---
 app.use((req, res) => {

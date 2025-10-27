@@ -53,71 +53,66 @@ export const register = async (req, res) => {
     }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
 export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        const user = await User.findOne({ email }).select('+password');
-
-        if (!user) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'invalid email or password'
-            });
-        }
-
-        if (user.provider !== 'local') {
-            return res.status(400).json({
-                status: 'error',
-                message: `this account is registered with ${user.provider}. Please use ${user.provider} login.`
-            });
-        }
-
-        const isPasswordValid = await user.comparePassword(password);
-
-        if (!isPasswordValid) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'invalid email or password'
-            });
-        }
-
-        if (!user.isActive) {
-            return res.status(403).json({
-                status: 'error',
-                message: 'your account has been deactivated. Please contact support.'
-            });
-        }
-
-        user.lastLogin = new Date();
-        await user.save();
-
-        const token = generateToken(user._id);
-
-        res.status(200).json({
-            status: 'success',
-            message: 'login successful',
-            data: {
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    avatar: user.avatar
-                },
-                token
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            status: 'error',
-            message: error.message
-        });
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'invalid email or password'
+      });
     }
+
+    if (user.provider !== 'local') {
+      return res.status(400).json({
+        status: 'error',
+        message: `this account is registered with ${user.provider}. Please use ${user.provider} login.`
+      });
+    }
+
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'invalid email or password'
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'your account has been deactivated. Please contact support.'
+      });
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken(user._id);
+
+    // ✅ simpler, frontend-friendly format
+    res.status(200).json({
+      success: true,
+      message: 'login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message
+    });
+  }
 };
+
 
 // @desc    Get current user
 // @route   GET /api/auth/me
